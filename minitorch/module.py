@@ -31,11 +31,38 @@ class Module:
 
     def train(self) -> None:
         """Set the mode of this module and all descendent modules to `train`."""
-        raise NotImplementedError("Need to include this file from past assignment.")
+        self.training = True
+        eval_list = []
+        visited_list = [self]
+        if self.__dict__["_modules"]:
+            for k, v in self.__dict__["_modules"].items():
+                eval_list.append((k, v))
+            while(eval_list):
+                k, v = eval_list.pop()
+                v.training = True
+                visited_list.append(v)
+                if v.__dict__["_modules"]:
+                    for key, value in v.__dict__["_modules"].items():
+                        if value not in visited_list and value not in eval_list:
+                            eval_list.append((key, value))
 
     def eval(self) -> None:
         """Set the mode of this module and all descendent modules to `eval`."""
-        raise NotImplementedError("Need to include this file from past assignment.")
+        self.training = False
+        eval_list = []
+        visited_list = [self]
+        if self.__dict__["_modules"]:
+            for k, v in self.__dict__["_modules"].items():
+                eval_list.append((k, v))
+            while(eval_list):
+                k, v = eval_list.pop()
+                v.training = False
+                visited_list.append(v)
+                if v.__dict__["_modules"]:
+                    for key, value in v.__dict__["_modules"].items():
+                        if value not in visited_list and value not in eval_list:
+                            eval_list.append((key, value))
+                
 
     def named_parameters(self) -> Sequence[Tuple[str, Parameter]]:
         """Collect all the parameters of this module and its descendents.
@@ -45,11 +72,29 @@ class Module:
             The name and `Parameter` of each ancestor parameter.
 
         """
-        raise NotImplementedError("Need to include this file from past assignment.")
+        parameters_list = []
+        for k, v in self.__dict__["_parameters"].items():
+            parameters_list.append((k, v))
+        name_list = []
+        visited_list = [self]
+        if self.__dict__["_modules"]:
+            for k, v in self.__dict__["_modules"].items():
+                name_list.append((k, v))
+        while(name_list):
+            name, module = name_list.pop()
+            for k, v in module.__dict__["_parameters"].items():
+                parameters_list.append((name+"."+k, v))
+            visited_list.append(module)
+            if module.__dict__["_modules"]:
+                for key, value in module.__dict__["_modules"].items():
+                    if value not in visited_list and value not in name_list:
+                        name_list.append((name+"."+key, value))
+        return parameters_list
 
     def parameters(self) -> Sequence[Parameter]:
         """Enumerate over all the parameters of this module and its descendents."""
-        raise NotImplementedError("Need to include this file from past assignment.")
+        return list(dict(self.named_parameters()).values())
+
 
     def add_parameter(self, k: str, v: Any) -> Parameter:
         """Manually add a parameter. Useful helper for scalar parameters.
